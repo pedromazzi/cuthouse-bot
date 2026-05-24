@@ -1,0 +1,209 @@
+{
+  "name": "Cuthouse- Lembrete Ag Fernando",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lembrete-calcom",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "5d90e995-e743-4050-8174-745393104458",
+      "name": "Webhook",
+      "webhookId": "55be73e7-19c1-47e4-88c3-6d64fc10eee1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const startTime = $json.body.payload.startTime;\nconst nome = $json.body.payload.attendees[0].name;\nconst email = $json.body.payload.attendees[0].email;\nconst bookingUid = $json.body.payload.uid;\n\n// Extrai o número de WhatsApp do email (remove @cuthouse.com)\nconst telefone = email.replace('@cuthouse.com', '');\n\n// Calcula o horário do lembrete (1h antes do agendamento)\nconst dataAgendamento = new Date(startTime);\nconst dataLembrete = new Date(dataAgendamento.getTime() - 60 * 60 * 1000);\n\n// Formata o horário para exibir na mensagem (horário de Brasília)\nconst horarioBrasilia = dataAgendamento.toLocaleString('pt-BR', {\n  timeZone: 'America/Sao_Paulo',\n  hour: '2-digit',\n  minute: '2-digit'\n});\n\nreturn {\n  telefone,\n  nome,\n  startTime,\n  dataLembrete: dataLembrete.toISOString(),\n  horarioBrasilia,\n  bookingUid\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "b9cca971-e49c-4e50-a458-798122f87830",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.dataLembrete }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "f1b70cec-109e-4177-9053-b2609ba221c7",
+      "name": "Wait",
+      "webhookId": "ba878e16-ac3f-49fb-9df4-9bc1a7ba17a1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-evolution-api.hpymn9.easypanel.host/message/sendText/Cuthouse",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "minhachave123"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Code in JavaScript').item.json.telefone }}\",\n  \"text\": \"Olá, {{ $('Code in JavaScript').item.json.nome }}! 😊 Passando para lembrar que seu horário com o Fernando na Barbearia Cuthouse é daqui a 1 hora, às {{ $('Code in JavaScript').item.json.horarioBrasilia }}. Te esperamos! ✂️\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1104,
+        96
+      ],
+      "id": "27f65ccc-d129-4fa3-b6d9-b7142c322ec3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.cal.com/v2/bookings/{{$json.bookingUid}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_2739fa16787a678d8d052217e30d1451"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        -32
+      ],
+      "id": "debcb640-00e6-4788-8694-af7c903426b5",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "002c38de-1505-4487-9612-ab40f9cac58f",
+              "leftValue": "={{ $json.data[0].status }}",
+              "rightValue": "CANCELLED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -32
+      ],
+      "id": "f5824b4c-1cf1-4b26-9cc1-ca7c2b17f546",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "82187218-6afa-456c-89f3-b564dc6ebc61",
+  "meta": {
+    "instanceId": "a7a09d48831490cfd2d486514790aff88c4cc3ea23b89f1d30fed0d1573dabde"
+  },
+  "id": "yPFzsxLp9P0JuEQD",
+  "tags": []
+}

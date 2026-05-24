@@ -1,0 +1,1329 @@
+{
+  "name": "Cuthouse",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2d80e56d-55b3-41d7-9e86-f295c2393e71",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -6224,
+        1280
+      ],
+      "id": "098b0b4f-4c56-4eda-86d9-def30cca6733",
+      "name": "Webhook",
+      "webhookId": "2d80e56d-55b3-41d7-9e86-f295c2393e71"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "21cecffe-24db-4990-8be2-3edf8a28d43e",
+              "leftValue": "={{ $('Webhook').item.json.body.data.key.fromMe }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3728,
+        1264
+      ],
+      "id": "0c2e3fdd-27e1-410d-b5d5-3bc8aed1b286",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.5,
+          "topK": 32,
+          "topP": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4528,
+        1568
+      ],
+      "id": "06852db3-35f1-4a30-87a3-4cf3023fe9f5",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pZFVlSKCJfJaTNUT",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-evolution-api.hpymn9.easypanel.host/message/sendText/Cuthouse",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "minhachave123"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Webhook').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"{{ $json.output ? $json.output.replace(/\\n/g, '\\\\n').replace(/\\\"/g, '\\\\\"') : 'Um segundo... me manda um ok que já te respondo 😊' }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3136,
+        880
+      ],
+      "id": "e2bd1984-f211-4405-b272-8062b3b24961",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cria um agendamento no Cal.com para o barbeiro Fernando.\nUse quando o cliente confirmar o horário desejado.\n\nParâmetros obrigatórios — NUNCA chame esta tool sem ter todos preenchidos:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n- horario: APENAS o horário no formato HH:mm (ex: 14:00)\n- name: nome completo do cliente (apenas o nome, sem informações extras)\n- servico: nome exato do serviço escolhido pelo cliente conforme a lista de serviços\n\nNUNCA chame esta tool se qualquer um desses valores estiver indefinido, vazio ou não confirmado pelo cliente.",
+        "method": "POST",
+        "url": "https://api.cal.com/v2/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_2739fa16787a678d8d052217e30d1451"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"eventTypeId\": {{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5080542 : 4945478 }},\n  \"start\": \"{{ $fromAI('dia') + 'T' + $fromAI('horario') + ':00-03:00' }}\",\n  \"attendee\": {\n    \"name\": \"{{ $fromAI('name') }} / {{ $fromAI('servico') }}\",\n    \"email\": \"{{ $('Set Mensagens').item.json.email_cliente }}\",\n    \"timeZone\": \"America/Sao_Paulo\",\n    \"language\": \"pt-BR\"\n  },\n  \"metadata\": {\n    \"telefone\": \"{{ $('Webhook').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net','') }}\",\n    \"servico\": \"{{ $fromAI('servico') }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2800,
+        2128
+      ],
+      "id": "73ca5be0-bb3f-46d7-ada0-fd7b811639ca",
+      "name": "criar_agendamento_fernando"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "=buffer:{{ $json.body.data.key.remoteJid }}",
+        "messageData": "={{ $json.body.data.message.conversation || $json.body.data.message.extendedTextMessage?.text || '' }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -6032,
+        1280
+      ],
+      "id": "b2e09768-8d41-47d7-86f7-e77d0efcaa1c",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -5840,
+        1280
+      ],
+      "id": "0e4142b4-a6ac-47f3-8b4b-35ff08eeb272",
+      "name": "Wait",
+      "webhookId": "1236b497-dd59-461b-b754-7603479e3a40"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "messages",
+        "key": "=buffer:{{ $('Webhook').item.json.body.data.key.remoteJid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -5632,
+        1280
+      ],
+      "id": "e324b031-f7fb-4135-8984-4fd21c8dee3d",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2b1b680e-ba88-4dac-8e46-28f777920984",
+              "leftValue": "={{ $json.messages?.last() }}",
+              "rightValue": "={{ $('Webhook').item.json.body.data.message.conversation }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -5424,
+        1280
+      ],
+      "id": "028a964e-1462-4e3c-8fb4-31a91177a019",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "msg-concat",
+              "name": "mensagem_concatenada",
+              "value": "={{ $('Redis1').item.json.messages.join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "remote-jid",
+              "name": "remoteJid",
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "73ea2ca2-c42e-4ee2-a790-5f2263f0c63b",
+              "name": "email_cliente",
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net', '@cuthouse.com') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -5008,
+        1264
+      ],
+      "id": "0d65ccc6-547f-432a-b8b0-64e11cac8e90",
+      "name": "Set Mensagens"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -5312,
+        1568
+      ],
+      "id": "30c2a23f-348a-4f2b-b52d-f33dfe9abab2",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=buffer:{{ $('Webhook').item.json.body.data.key.remoteJid }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -5200,
+        1264
+      ],
+      "id": "4e4185ec-e4bb-43d6-8158-85ae5d895d8a",
+      "name": "Redis3",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Verifica horários disponíveis do barbeiro Fernando no Cal.com.\nParâmetros:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n\nNUNCA passe startTime ou endTime — apenas o parâmetro dia.\nNUNCA use o horário específico pedido pelo cliente.\nSempre use fuso horário America/Sao_Paulo.",
+        "url": "=https://api.cal.com/v2/slots?eventTypeId={{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5080542 : 4945478 }}&start={{ $fromAI('dia') + 'T09:00:00-03:00' }}&end={{ $fromAI('dia') + 'T20:30:00-03:00' }}&timeZone=America/Sao_Paulo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2024-09-04"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_2739fa16787a678d8d052217e30d1451"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2976,
+        2144
+      ],
+      "id": "1d171e75-78f6-4e49-bb62-724dcbb5f6b9",
+      "name": "verificar_horarios_fernando"
+    },
+    {
+      "parameters": {
+        "content": "## REMARCAR AGENDAMENTOS\n\n\n",
+        "height": 256,
+        "width": 848,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2512,
+        2144
+      ],
+      "typeVersion": 1,
+      "id": "b9fee318-df7e-4700-b6be-a289f45dded6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## FERNANDO\n",
+        "height": 208,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3040,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "451f1437-1a50-4a72-97f2-dfa122635fbc",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## PLINIO\n\n",
+        "height": 208,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3424,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "2eda5b2e-0985-40d1-b715-70095dd2d54e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## LEO\n\n",
+        "height": 208,
+        "width": 436
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3888,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "5b258918-dd7f-4f4d-9ba0-8674850bfacb",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Verifica horários disponíveis do barbeiro Plinio no Cal.com.\nParâmetros:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n\nNUNCA passe startTime ou endTime — apenas o parâmetro dia.\nNUNCA use o horário específico pedido pelo cliente.\nSempre use fuso horário America/Sao_Paulo.",
+        "url": "=https://api.cal.com/v2/slots?eventTypeId={{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5089791 : 5088950 }}&start={{ $fromAI('dia') + 'T09:00:00-03:00' }}&end={{ $fromAI('dia') + 'T20:30:00-03:00' }}&timeZone=America/Sao_Paulo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2024-09-04"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_289631d922e9d83dfe263dc62b8cf49d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -3376,
+        2144
+      ],
+      "id": "b41bce07-03ac-4d4d-a56e-6fdeff91da85",
+      "name": "verificar_horarios_plinio"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cria um agendamento no Cal.com para o barbeiro Plinio.\nUse quando o cliente confirmar o horário desejado.\n\nParâmetros obrigatórios — NUNCA chame esta tool sem ter todos preenchidos:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n- horario: APENAS o horário no formato HH:mm (ex: 14:00)\n- name: nome completo do cliente (apenas o nome, sem informações extras)\n- servico: nome exato do serviço escolhido pelo cliente conforme a lista de serviços\n\nNUNCA chame esta tool se qualquer um desses valores estiver indefinido, vazio ou não confirmado pelo cliente.",
+        "method": "POST",
+        "url": "https://api.cal.com/v2/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_289631d922e9d83dfe263dc62b8cf49d"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"eventTypeId\": {{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5089791 : 5088950 }},\n  \"start\": \"{{ $fromAI('dia') + 'T' + $fromAI('horario') + ':00-03:00' }}\",\n  \"attendee\": {\n    \"name\": \"{{ $fromAI('name') }} / {{ $fromAI('servico') }}\",\n    \"email\": \"{{ $('Set Mensagens').item.json.email_cliente }}\",\n    \"timeZone\": \"America/Sao_Paulo\",\n    \"language\": \"pt-BR\"\n  },\n  \"metadata\": {\n    \"telefone\": \"{{ $('Webhook').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net','') }}\",\n    \"servico\": \"{{ $fromAI('servico') }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -3200,
+        2112
+      ],
+      "id": "bf5b024f-c6fc-45d3-9b0b-a0b976a62a76",
+      "name": "criar_agendamento_plinio"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Verifica horários disponíveis do barbeiro Leo no Cal.com.\nParâmetros:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n\nNUNCA passe startTime ou endTime — apenas o parâmetro dia.\nNUNCA use o horário específico pedido pelo cliente.\nSempre use fuso horário America/Sao_Paulo.",
+        "url": "=https://api.cal.com/v2/slots?eventTypeId={{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5089864 : 5089820 }}&start={{ $fromAI('dia') + 'T09:00:00-03:00' }}&end={{ $fromAI('dia') + 'T20:30:00-03:00' }}&timeZone=America/Sao_Paulo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2024-09-04"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_c687783fbf5713510d43299ba074bcc1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -3808,
+        2144
+      ],
+      "id": "87217903-5c1c-4435-b5d6-6972c97a8a61",
+      "name": "verificar_horarios_leo"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cria um agendamento no Cal.com para o barbeiro Leo.\nUse quando o cliente confirmar o horário desejado.\n\nParâmetros obrigatórios — NUNCA chame esta tool sem ter todos preenchidos:\n- dia: APENAS a data no formato YYYY-MM-DD (ex: 2026-03-30)\n- horario: APENAS o horário no formato HH:mm (ex: 14:00)\n- name: nome completo do cliente (apenas o nome, sem informações extras)\n- servico: nome exato do serviço escolhido pelo cliente conforme a lista de serviços\n\nNUNCA chame esta tool se qualquer um desses valores estiver indefinido, vazio ou não confirmado pelo cliente.",
+        "method": "POST",
+        "url": "https://api.cal.com/v2/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_c687783fbf5713510d43299ba074bcc1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json  "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"eventTypeId\": {{ ['Cabelo + Barba', 'Cabelo + Sobrancelha', 'Cabelo + Barba + Sobrancelha', 'Platinado', 'Luzes', 'Atendimento Inclusivo TEA'].includes($fromAI('servico')) ? 5089864 : 5089820 }},\n  \"start\": \"{{ $fromAI('dia') + 'T' + $fromAI('horario') + ':00-03:00' }}\",\n  \"attendee\": {\n    \"name\": \"{{ $fromAI('name') }} / {{ $fromAI('servico') }}\",\n    \"email\": \"{{ $('Set Mensagens').item.json.email_cliente }}\",\n    \"timeZone\": \"America/Sao_Paulo\",\n    \"language\": \"pt-BR\"\n  },\n  \"metadata\": {\n    \"telefone\": \"{{ $('Webhook').item.json.body.data.key.remoteJid.replace('@s.whatsapp.net','') }}\",\n    \"servico\": \"{{ $fromAI('servico') }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -3600,
+        2128
+      ],
+      "id": "9d1ab97e-df53-4633-b451-e4f2b87fb2a0",
+      "name": "criar_agendamento_leo"
+    },
+    {
+      "parameters": {
+        "content": "## Modelo Chat / MEMÓRIA\n",
+        "height": 224,
+        "width": 536,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4624,
+        1488
+      ],
+      "typeVersion": 1,
+      "id": "805f5005-a39f-4f0d-b44d-7d2d4fe808ac",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -3664,
+        1488
+      ],
+      "id": "17465187-6ce4-4c10-bb23-e2a7dded65a8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "n3IilgNlZgyh1xB2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'memoria:' + $('Webhook').item.json.body.data.key.remoteJid }}",
+        "sessionTTL": 86400,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        -4320,
+        1568
+      ],
+      "id": "d104b81e-7ec4-4809-8a5c-3c18283ecf1f",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## CANCELAR PLINIO\n",
+        "height": 192,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2672,
+        1072
+      ],
+      "typeVersion": 1,
+      "id": "3f613a04-5a75-4fa5-b44b-454729be9715",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cancela um agendamento no Cal.com. Use quando o cliente confirmar que quer cancelar. Parâmetro: bookingId (uid do agendamento retornado pela ferramenta de busca — use o campo 'uid', não o campo 'id' numérico)",
+        "method": "POST",
+        "url": "=https://api.cal.com/v2/bookings/{{ $fromAI('bookingId') }}/cancel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_2739fa16787a678d8d052217e30d1451"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"cancellationReason\": \"Cancelado pelo cliente\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2560,
+        912
+      ],
+      "id": "16e844b8-a22e-4603-8733-a6b85a0c45b0",
+      "name": "cancelar_agendamento_fernando"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cancela um agendamento no Cal.com para o barbeiro Plínio. Use quando o cliente confirmar que quer cancelar. Parâmetro: bookingId (uid do agendamento retornado pela ferramenta de busca — use o campo 'uid', não o campo 'id' numérico)",
+        "method": "POST",
+        "url": "=https://api.cal.com/v2/bookings/{{ $fromAI('bookingId') }}/cancel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_289631d922e9d83dfe263dc62b8cf49d"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"cancellationReason\": \"Cancelado pelo cliente\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2560,
+        1136
+      ],
+      "id": "1616c86b-8bce-4827-aab4-2e8620298027",
+      "name": "cancelar_agendamento_plinio"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Cancela um agendamento no Cal.com para o barbeiro Leo. Use quando o cliente confirmar que quer cancelar. Parâmetro: bookingId (uid do agendamento retornado pela ferramenta de busca — use o campo 'uid', não o campo 'id' numérico)",
+        "method": "POST",
+        "url": "=https://api.cal.com/v2/bookings/{{ $fromAI('bookingId') }}/cancel",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_c687783fbf5713510d43299ba074bcc1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"cancellationReason\": \"Cancelado pelo cliente\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2576,
+        1360
+      ],
+      "id": "835446ae-0547-4be0-8923-971fd5a29569",
+      "name": "cancelar_agendamento_leo"
+    },
+    {
+      "parameters": {
+        "content": "## CANCELAR LEO\n",
+        "height": 176,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2672,
+        1312
+      ],
+      "typeVersion": 1,
+      "id": "6eed2068-ace2-4dbb-b6e9-1ddf73687bd6",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## CANCELAR FERNANDO\n",
+        "height": 192,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2672,
+        848
+      ],
+      "typeVersion": 1,
+      "id": "7e064132-466c-4cf4-963a-27147a64c24a",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca agendamentos futuros do cliente no Cal.com. Use quando o cliente quiser cancelar ou remarcar. O email do cliente é gerado automaticamente pelo telefone dele: remova o @s.whatsapp.net do remoteJid e adicione @cuthouse.com. Parâmetro: email. Ao retornar o agendamento encontrado, sempre use o campo 'uid' (string alfanumérica) como bookingId para cancelamento — nunca o campo 'id' numérico.",
+        "url": "=https://api.cal.com/v2/bookings?attendeeEmail={{ $('Set Mensagens').item.json.email_cliente }}&status=upcoming",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_2739fa16787a678d8d052217e30d1451"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2032,
+        2240
+      ],
+      "id": "a88726b5-b345-4ccd-b986-9c0e03f5cf88",
+      "name": "buscar_agendamento_fernando"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca agendamentos futuros do cliente no Cal.com para o barbeiro Plínio. Use quando o cliente quiser cancelar ou remarcar um agendamento com o Plínio. O email do cliente é gerado automaticamente pelo telefone dele: remova o @s.whatsapp.net do remoteJid e adicione @cuthouse.com. Ao retornar o agendamento encontrado, sempre use o campo 'uid' (string alfanumérica) como bookingId para cancelamento — nunca o campo 'id' numérico.",
+        "url": "=https://api.cal.com/v2/bookings?attendeeEmail={{ $('Set Mensagens').item.json.email_cliente }}&status=upcoming",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_289631d922e9d83dfe263dc62b8cf49d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -1840,
+        2240
+      ],
+      "id": "97c05ff7-d7b6-46d6-9097-30a485453057",
+      "name": "buscar_agendamento_plinio"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca agendamentos futuros do cliente no Cal.com para o barbeiro Leo. Use quando o cliente quiser cancelar ou remarcar um agendamento com o Léo. O email do cliente é gerado automaticamente pelo telefone dele: remova o @s.whatsapp.net do remoteJid e adicione @cuthouse.com. Ao retornar o agendamento encontrado, sempre use o campo 'uid' (string alfanumérica) como bookingId para cancelamento — nunca o campo 'id' numérico.",
+        "url": "=https://api.cal.com/v2/bookings?attendeeEmail={{ $('Set Mensagens').item.json.email_cliente }}&status=upcoming",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "cal-api-version",
+              "value": "2026-02-25"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer cal_live_c687783fbf5713510d43299ba074bcc1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -2208,
+        2240
+      ],
+      "id": "6b00890f-4474-4a37-8889-802fd7df9bd2",
+      "name": "buscar_agendamento_leo"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Data e hora atual em Brasília: {{ $now.setZone('America/Sao_Paulo').toFormat(\"cccc, dd/MM/yyyy HH:mm\", { locale: 'pt-BR' }) }}\nMensagem do cliente: {{ $json.mensagem_concatenada }}\n{{ $json.data_interpretada ? '⚠️ Data interpretada pelo sistema: ' + $json.data_exibicao + ' (' + $json.data_interpretada + '). Confirme com o cliente antes de prosseguir.' : '' }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=# IDENTIDADE\n- Você é **Sofia**, responsável pelos agendamentos da **TheCuthouse**.\n- Fale sempre como uma pessoa real — natural, descontraída e acolhedora.\n- **Nunca diga que é assistente virtual ou inteligência artificial.**\n- O cliente deve sentir que está falando com uma atendente humana da barbearia.\n- Nunca repita o nome do cliente durante a conversa. Após saber o nome, trate a pessoa de forma próxima, mas sem citar o nome repetidamente.\n\n---\n\n# SAUDAÇÃO INICIAL\n- Se não houver histórico de conversa anterior, apresente-se como Sofia na primeira resposta.\n- Varie a forma de se apresentar de forma natural. Exemplos:\n  - \"Oi! Sou a Sofia, responsável pelos agendamentos aqui da TheCuthouse 😊 Como posso te ajudar?\"\n  - \"Olá! Me chamo Sofia e cuido dos agendamentos da TheCuthouse. Como posso te ajudar?\"\n  - \"Oi, tudo bem? Sou a Sofia, da TheCuthouse! No que posso te ajudar hoje?\"\n- Se já houver histórico de conversa, **nunca** se apresente novamente — continue de onde parou de forma natural.\n\n---\n\n# TOM DE VOZ\n- Fale como um amigo — com leveza, empatia e naturalidade.\n- Seja sempre breve e humano. Evite textos longos.\n- Transmita calma, atenção e interesse genuíno em ajudar.\n- Sempre que possível, finalize com empatia, reforçando a boa experiência.\n- **Não ofereça** serviços que não existam no catálogo da barbearia.\n- Quando o cliente mandar mensagens curtas ou ambíguas (ex: \"agendamento\", \"Fernando\", \"quero marcar\"), interprete o contexto e dê continuidade de forma natural — pergunte apenas o que falta, sem travar ou pedir para repetir.\n\n---\n\n# SOBRE A BARBEARIA\n- **Endereço:** Travessa Cristal (térreo) - Rua 16 de março, 325 - Centro - Petrópolis\n- **Horário:** Segunda a Sábado, das 09h às 20h\n- **Último horário disponível para agendamento:** 20h\n- **Barbeiros:** Fernando, Plinio e Leo \n\n---\n\n# SERVIÇOS E PREÇOS\n\n| Serviço | Preço | Duração |\n|---|---|---|\n| Corte Adulto | R$ 60 | 30 min |\n| Corte Infantil | R$ 60 | 30 min |\n| Franja Infantil | R$ 15 | 30 min |\n| Barba | R$ 40 | 30 min |\n| Pezinho | R$ 15 | 30 min |\n| Sobrancelha | R$ 20 | 30 min |\n| Hidratação Cabelo | R$ 30 | 30 min |\n| Hidratação Barba | R$ 25 | 30 min |\n| Camuflagem Cabelo | R$ 45 | 30 min |\n| Camuflagem Barba | R$ 35 | 30 min |\n| Tintura Cabelo | R$ 45 | 30 min |\n| Tintura Barba | R$ 35 | 30 min |\n| Cabelo + Barba | R$ 100 | 1h |\n| Cabelo + Sobrancelha | R$ 80 | 1h |\n| Cabelo + Barba + Sobrancelha | R$ 120 | 1h |\n| Platinado | R$ 200 | 1h |\n| Luzes | R$ 150 | 1h |\n| Luzes | R$ 150 | 1h |\n| Atendimento Inclusivo TEA | R$ 80 | 1h |\n\nOs nomes dos serviços devem ser utilizados **exatamente como listados acima**.\n- Nunca altere, resuma ou adapte o nome do serviço.\n- Nunca crie variações (ex: \"corte\", \"corte simples\", \"cabelo e barba\", etc).\n- Sempre use o nome completo e exato ao enviar para as tools.\n\n---\n\n# IDENTIFICAÇÃO DO CLIENTE\n- **NUNCA** peça telefone ou email ao cliente — em nenhuma situação.\n- O email do cliente para este atendimento é: `{{ $json.email_cliente }}`\n- Use **sempre** esse email em todos os agendamentos e buscas. Nunca invente ou altere.\n\n---\n\n# FLUXO DE ATENDIMENTO\n\nSiga **sempre** esta ordem ao atender um cliente que quer agendar. Pule as etapas que o cliente já respondeu espontaneamente.\n\n**1º — Saudação**\nSe for a primeira mensagem da conversa, apresente-se como Sofia de forma natural e pergunte como pode ajudar. Se já houver histórico, vá direto ao ponto.\n\n**2º — Barbeiro**\nPergunte com qual barbeiro o cliente quer atender.\n- Se o cliente já informou o barbeiro, pule esta etapa.\n- Se o cliente não tiver preferência, apresente os barbeiros disponíveis e peça para ele escolher qualquer um:\n  \"Temos o Fernando, Plinio e o  Leo disponíveis. Pode escolher qualquer um 😊\"\n\n**3º — Serviço**\nPergunte qual serviço deseja e apresente a lista:\n\n1️⃣ Corte Adulto — R$ 60\n2️⃣ Corte Infantil — R$ 60\n3️⃣ Franja Infantil — R$ 15\n4️⃣ Barba — R$ 40\n5️⃣ Pezinho — R$ 15\n6️⃣ Sobrancelha — R$ 20\n7️⃣ Hidratação Cabelo — R$ 30\n8️⃣ Hidratação Barba — R$ 25\n9️⃣ Camuflagem Cabelo — R$ 45\n🔟 Camuflagem Barba — R$ 35\n1️⃣1️⃣ Tintura Cabelo — R$ 45\n1️⃣2️⃣ Tintura Barba — R$ 35\n1️⃣3️⃣ Cabelo + Barba — R$ 100\n1️⃣4️⃣ Cabelo + Sobrancelha — R$ 80\n1️⃣5️⃣ Cabelo + Barba + Sobrancelha — R$ 120\n1️⃣6️⃣ Platinado — R$ 200\n1️⃣7️⃣ Luzes — R$ 150\n1️⃣8️⃣ Atendimento Inclusivo TEA 🧩 — A partir de R$ 80\n\n- Se o cliente escolher \"Atendimento Inclusivo TEA\", envie obrigatoriamente esta mensagem antes de continuar:\n\n\"ATENDIMENTO INCLUSIVO 🧩 — R$80\nServiço realizado com agenda adaptada a partir de 40 minutos, proporcionando uma experiência mais tranquila, confortável e personalizada.\nApós 40 minutos será acrescido o valor de R$20 a cada 10 minutos excedentes.\"\n\nSomente após enviar essa mensagem, continue perguntando o dia de preferência.\n\n- Se o cliente já informou o serviço, pule esta etapa.\n- Nunca crie um agendamento sem que o serviço tenha sido escolhido claramente pelo cliente.\n\n**4º — Dia**\nPergunte qual dia prefere.\n- Se o cliente já informou o dia, pule esta etapa.\n**Após receber o dia, o próximo passo OBRIGATÓRIO é acionar verificar_horarios e mostrar os horários disponíveis ao cliente. NUNCA pule esta etapa.**\n\n**5º — Horários disponíveis**\nAcione a tool verificar_horarios do barbeiro escolhido para o dia desejado.\nMostre **todos** os horários retornados, sem filtrar ou resumir.\n**NUNCA avance para o passo 6 sem o cliente ter escolhido explicitamente um horário da lista retornada. Receber o dia NÃO autoriza criar o agendamento.**\n\n**6º — Nome completo**\nApós o cliente confirmar o horário, peça o nome completo.\n- Se o cliente já informou o nome anteriormente na conversa, use o nome já informado — não pergunte novamente.\n\n**7º — Confirmar agendamento**\nAcione `criar_agendamento_[barbeiro]` com: horário, nome, email automático, serviço e barbeiro.\n- Antes de acionar, confirme que serviço, horário e nome completo estão definidos.\n- Nunca acione sem ter todos esses dados.\nAguarde confirmação de sucesso da tool antes de responder ao cliente.\nApós a confirmação, informe ao cliente: barbeiro, serviço, data e horário.\n\n---\n\n# TOOLS DISPONÍVEIS\n\n### verificar_horarios_[barbeiro]\n**Quando usar:** Sempre que precisar mostrar horários disponíveis de um barbeiro específico. Antes de qualquer menção a horários — nunca responda horários de memória.\n**Regra:** Busque sempre o dia inteiro (09:00 até 20:30). Nunca use o horário específico pedido pelo cliente como parâmetro. O Cal.com retorna apenas os slots realmente disponíveis.\n**Importante:** Mostre TODOS os horários retornados, sem filtrar ou resumir nenhum.\n\n### criar_agendamento_[barbeiro]\n**Quando usar:** Somente após confirmar que você possui TODOS os valores abaixo resolvidos e explícitos:\n- Nome completo do cliente (texto real, não vazio)\n- Serviço escolhido (texto real da lista de serviços)\n- Horário confirmado (data e hora confirmados pelo cliente)\n\n**NUNCA chame esta tool se qualquer um desses valores estiver indefinido, vazio ou não confirmado pelo cliente.**\n**NUNCA chame esta tool apenas porque o cliente disse \"pode marcar\" sem ter informado nome, serviço e horário explicitamente nesta conversa.**\nAguarde confirmação de sucesso da tool antes de responder ao cliente.\nNunca confirme sem receber resposta de sucesso da tool.\n\n---\n\n# FLUXO DE CANCELAMENTO / REMARCAÇÃO\n1. Cliente quer cancelar ou remarcar → pergunte com qual barbeiro o agendamento foi feito, caso não saiba pelo contexto da conversa.\n2. Com o barbeiro identificado, acione a tool correspondente:\n  - buscar_agendamento_fernando\n  - buscar_agendamento_plinio\n  - buscar_agendamento_leo\n3. Mostre o agendamento encontrado e pergunte se prefere remarcar ou cancelar. Ex: \"Encontrei seu agendamento: [serviço] com [barbeiro], dia [data] às [horário]. Você prefere remarcar para outro dia ou quer cancelar mesmo?\"\n4. **Nunca peça email ao cliente** — use sempre o email gerado automaticamente.\n5. Se o cliente quiser REMARCAR → não cancele ainda. Siga o fluxo de agendamento normalmente (barbeiro, serviço, dia, horários disponíveis, nome, confirmação). Somente após o novo agendamento ser criado com sucesso, acione a tool de cancelamento do agendamento anterior.\n6. Se o cliente quiser CANCELAR → confirme a intenção e acione a tool de cancelamento correspondente:\n  - cancelar_agendamento_fernando\n  - cancelar_agendamento_plinio\n  - cancelar_agendamento_leo\nNunca use a tool de um barbeiro para cancelar agendamento de outro.\nConsidere como confirmação de cancelamento QUALQUER variação que indique concordância, incluindo respostas curtas, informais ou com emojis positivos (sim, pode, ok, isso, 👍, blz, beleza, confirmo, faz isso, pode sim, isso aí, quero cancelar, cancela, etc).\n7. Se o cliente negar ambas as opções → pergunte o que deseja fazer.\n8. Se houver mais de um agendamento, mostre todos e peça para o cliente escolher qual deseja remarcar ou cancelar.\n9. Se nenhum agendamento for encontrado, informe ao cliente de forma clara e pergunte como pode ajudar.\n\n---\n\n# DATA E HORA ATUAL\n\nData e hora em Brasília: {{ $now.setZone('America/Sao_Paulo').toFormat(\"cccc, dd/MM/yyyy HH:mm\", { locale: 'pt-BR' }) }}\n\n---\n\n# DÚVIDAS FREQUENTES\n\nResponda **somente se o cliente perguntar**. Essas informações não fazem parte do fluxo de agendamento.\n\n**Abre em feriados?**\nNão, a barbearia não abre em feriados.\n\n**Fica no Térreo ou Sobreloja?**\nFica no Térreo.\n\n**Formas de pagamento?**\nAceitamos cartão, dinheiro e Pix.\n\n**Vocês vendem bebidas?**\nSim! Temos as seguintes opções:\n\n| Bebida | Preço |\n|---|---|\n| Cerveja Spaten | R$ 10,00 |\n| Coca-Cola 200ml | R$ 4,00 |\n| Suco Kapo | R$ 4,00 |\n\n**Vocês vendem produtos de cabelo?**\nSim! Temos os seguintes produtos disponíveis:\n\n| Produto | Preço |\n|---|---|\n| Balm | R$ 25,00 |\n| Gel cola | R$ 25,00 |\n| Minoxidil | R$ 30,00 |\n| Pomada em pó | R$ 25,00 |\n| Pomada modeladora | R$ 25,00 |\n| Shampoo anticaspa | R$ 15,00 |\n\n# REGRAS GERAIS\n- Responda **APENAS** sobre assuntos da barbearia.\n- Se perguntarem algo fora do tema, diga que só pode ajudar com assuntos da TheCuthouse.\n- **Nunca invente informações** — confie sempre nas tools.\n- **Nunca peça email ou telefone ao cliente** — em nenhuma situação.\n- Utilize a memória da conversa para entender o contexto e não repetir perguntas desnecessárias.\n- Nunca verifique ou ofereça horários após as 20h.\n- Nunca crie um agendamento sem que o serviço tenha sido escolhido claramente pelo cliente.\n- Nunca pule etapas obrigatórias, EXCETO quando o cliente já tiver fornecido essa informação anteriormente na conversa.\n- Sempre que acionar uma tool, você DEVE: 1) chamar a tool corretamente e 2) incluir uma mensagem clara para o cliente na mesma resposta. Nunca retorne uma resposta vazia.\n- Se a tool verificar_horarios retornar sem horários disponíveis, informe ao cliente de forma simpática que não há horários disponíveis nesse dia e peça para escolher outra data.\n- Mostre todos os horários disponíveis de forma organizada e fácil de ler.\n- Nunca repita a mesma pergunta mais de uma vez se o cliente não respondeu diretamente — reformule.\n- Se o cliente mandar áudio, responda: \"Oi! No momento só consigo ler mensagens de texto. Pode me escrever sua dúvida? 😊\"\n- O agendamento é sempre individual — um cliente por vez.\n- Se o cliente indicar que deseja agendar para mais de uma pessoa (ex: \"somos 2\", \"para mim e meu filho\", \"duas pessoas\", etc):\n  → NÃO prossiga com o agendamento diretamente\n  → explique de forma natural que os agendamentos são feitos separadamente\n  → pergunte para qual pessoa deseja agendar primeiro\n- Se o cliente enviar o nome junto com indicação de múltiplas pessoas (ex: \"João. Somos 2\"):\n  → considere apenas o nome como informação parcial\n  → NÃO finalize o agendamento ainda\n  → peça confirmação de que deseja iniciar pelo primeiro agendamento individual\n- O campo name enviado para a tool deve conter APENAS o nome completo de uma única pessoa. Nunca inclua informações extras, números ou indicações de quantidade.\n- Se a mensagem do cliente contiver uma referência de data (ex: \"terça\", \"amanhã\", \"sexta\"), o sistema já calculou e forneceu a data correta no campo ⚠️ Data interpretada. Use essa data como referência e confirme com o cliente antes de buscar horários. Ex: \"Você quer para terça, dia 14/04, certo?\"\n\n---\n\n# REGRAS CRÍTICAS — NUNCA DESCUMPRIR\n- Nunca invente horários ou disponibilidade — confie sempre nas tools.\n- Nunca confirme agendamento sem receber resposta de sucesso da tool.\n- Nunca altere o nome dos serviços — use sempre o nome exato da tabela.\n- Nunca acione uma tool sem ter todos os dados necessários.\n- Nunca pule etapas obrigatórias do fluxo de atendimento.\n- Nunca peça email ou telefone ao cliente em nenhuma situação.\n- Se a tool `criar_agendamento` retornar erro ou falhar, informe ao cliente de forma simpática que o horário escolhido não está mais disponível e acione imediatamente a tool `verificar_horarios` do barbeiro correspondente para mostrar os horários disponíveis atualizados. Nunca deixe o cliente sem resposta quando houver erro no agendamento."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -3504,
+        1216
+      ],
+      "id": "aea9cb86-a68a-4f41-bbff-506699d7669e",
+      "name": "Sofia TheCuthouse",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));\nconst mensagem = $input.first().json.mensagem_concatenada || '';\nconst remoteJid = $input.first().json.remoteJid;\n\nconst diasSemana = {\n  'domingo': 0, 'dom': 0,\n  'segunda-feira': 1, 'segunda': 1,\n  'terca-feira': 2, 'terca': 2,\n  'quarta-feira': 3, 'quarta': 3,\n  'quinta-feira': 4, 'quinta': 4,\n  'sexta-feira': 5, 'sexta': 5,\n  'sabado': 6\n};\n\nconst nomesExibicao = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];\nconst meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];\n\nconst msgLower = mensagem.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\nfunction addDays(date, days) {\n  const result = new Date(date);\n  result.setDate(result.getDate() + days);\n  return result;\n}\n\nlet dataResolvida = null;\n\nif (msgLower.includes('hoje')) {\n  dataResolvida = agora;\n} else if (msgLower.includes('depois de amanha')) {\n  dataResolvida = addDays(agora, 2);\n} else if (msgLower.includes('amanha')) {\n  dataResolvida = addDays(agora, 1);\n} else {\n  const hojeSemana = agora.getDay();\n  const entradasOrdenadas = Object.entries(diasSemana).sort((a, b) => b[0].length - a[0].length);\n  for (const [nome, diaSemana] of entradasOrdenadas) {\n    if (msgLower.includes(nome)) {\n      let diff = diaSemana - hojeSemana;\n      if (diff <= 0) diff += 7;\n      dataResolvida = addDays(agora, diff);\n      break;\n    }\n  }\n}\n\nlet dataFormatada = null;\nlet dataExibicao = null;\nlet dataNovaEncontrada = false;\n\nif (dataResolvida) {\n  const yyyy = dataResolvida.getFullYear();\n  const mm = String(dataResolvida.getMonth() + 1).padStart(2, '0');\n  const dd = String(dataResolvida.getDate()).padStart(2, '0');\n  dataFormatada = `${yyyy}-${mm}-${dd}`;\n  const nomeDia = nomesExibicao[dataResolvida.getDay()];\n  const nomeMes = meses[dataResolvida.getMonth()];\n  dataExibicao = `${nomeDia}, ${dd} de ${nomeMes} de ${yyyy}`;\n  dataNovaEncontrada = true;\n}\n\nreturn {\n  mensagem_concatenada: $input.first().json.mensagem_concatenada,\n  remoteJid: remoteJid,\n  email_cliente: $input.first().json.email_cliente,\n  data_interpretada: dataFormatada,\n  data_exibicao: dataExibicao,\n  data_nova_encontrada: dataNovaEncontrada\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4816,
+        1264
+      ],
+      "id": "4e567342-2501-4a69-8ae0-a19b23e24e19",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "dia_contexto",
+        "key": "=dia_contexto:{{ $json.remoteJid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -4256,
+        1232
+      ],
+      "id": "3c35666a-2a78-4c9c-a36e-fb1b9548fc52",
+      "name": "Redis4",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "677ac508-0329-41de-982c-d7770498aaa6",
+              "name": "mensagem_concatenada",
+              "value": "={{ $('Set Mensagens').item.json.mensagem_concatenada }}",
+              "type": "string"
+            },
+            {
+              "id": "a21f8505-5111-42e3-a203-9b3638591e1f",
+              "name": "remoteJid",
+              "value": "={{ $('Set Mensagens').item.json.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "46eabc08-0128-464d-b393-a2188abbd1cc",
+              "name": "email_cliente",
+              "value": "={{ $('Set Mensagens').item.json.email_cliente }}",
+              "type": "string"
+            },
+            {
+              "id": "e88b9635-57f2-4afc-a994-c4b22eecd9f2",
+              "name": "data_interpretada",
+              "value": "={{ $json.data_interpretada || $json.dia_contexto }}",
+              "type": "string"
+            },
+            {
+              "id": "9d26f94c-ba48-4b98-9946-ec736e557168",
+              "name": "data_exibicao",
+              "value": "={{ $('Code in JavaScript').item.json.data_exibicao }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -4000,
+        1264
+      ],
+      "id": "17cdd904-a1cf-4371-887b-f4823421fa9d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4909036b-23e8-49b4-a7c1-34e8dfeb5f14",
+              "leftValue": "={{ $json.data_nova_encontrada }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4592,
+        1104
+      ],
+      "id": "5b8cc7bc-eebd-4d3d-9981-8994eeab2a89",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=dia_contexto:{{$json.remoteJid}}",
+        "value": "={{$json.data_interpretada}}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -4368,
+        944
+      ],
+      "id": "736ec3a7-c85f-4038-acaa-0e7b38d57cfe",
+      "name": "Redis2",
+      "credentials": {
+        "redis": {
+          "id": "TWfFwbjiWmSKwpB2",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_agendamento_fernando": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Redis3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis3": {
+      "main": [
+        [
+          {
+            "node": "Set Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_horarios_fernando": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Mensagens": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_horarios_plinio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_agendamento_plinio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_horarios_leo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_agendamento_leo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_agendamento_fernando": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_agendamento_plinio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_agendamento_leo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_agendamento_fernando": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_agendamento_plinio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_agendamento_leo": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sofia TheCuthouse",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sofia TheCuthouse": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "Redis4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "f8f480f2-9d9c-4137-b03f-c5ae74130cd0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a7a09d48831490cfd2d486514790aff88c4cc3ea23b89f1d30fed0d1573dabde"
+  },
+  "id": "OCTzbs3pJRZ9z7Mm",
+  "tags": []
+}

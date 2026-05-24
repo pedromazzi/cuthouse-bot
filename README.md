@@ -40,8 +40,7 @@ Desenvolvido para a **The Cuthouse** — em produção com cliente real.
 
 ## 📸 Demonstração
 
-*Screenshot da conversa real com o bot no WhatsApp — em breve*
-
+![Conversa real com o Cuthouse Bot no WhatsApp](thecut.png)
 ---
 
 ## 👨‍💻 Desenvolvido por
